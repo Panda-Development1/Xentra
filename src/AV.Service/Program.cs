@@ -7,8 +7,11 @@ namespace AV.Service;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
+        var signatureStore = new SignatureStore();
+        await signatureStore.LoadSignaturesAsync();
+
         var host = Host.CreateDefaultBuilder(args)
             .UseWindowsService(options =>
             {
@@ -25,7 +28,7 @@ public class Program
                 string logPath = Path.Combine(basePath, "Logs");
 
                 services.AddSingleton<AV.Engine.Interfaces.ILogger>(new Logger(logPath));
-                services.AddSingleton<ISignatureStore>(new SignatureStore());
+                services.AddSingleton<ISignatureStore>(signatureStore);
                 services.AddSingleton<IScanner>(sp =>
                     new Scanner(sp.GetRequiredService<ISignatureStore>(), sp.GetRequiredService<AV.Engine.Interfaces.ILogger>()));
                 services.AddSingleton<IQuarantine>(sp =>
@@ -36,6 +39,6 @@ public class Program
             })
             .Build();
 
-        host.Run();
+        await host.RunAsync();
     }
 }

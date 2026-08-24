@@ -258,13 +258,17 @@
                            Foreground="{StaticResource NeonCyan}" FontFamily="Consolas" Margin="0,0,0,20"/>
 
                 <!-- Actions -->
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
-                    <Button Content="Refresh" Click="RefreshQuarantine_Click" Margin="0,0,8,0"
-                            FontFamily="Consolas" Padding="16,8"/>
-                    <Button Content="Restore" Click="RestoreQuarantine_Click" Margin="0,0,8,0"
-                            FontFamily="Consolas" Padding="16,8"/>
-                    <Button Content="Delete" Click="DeleteQuarantine_Click"
-                            FontFamily="Consolas" Padding="16,8"/>
+                <StackPanel Grid.Row="1" Margin="0,0,0,16">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="Refresh" Click="RefreshQuarantine_Click" Margin="0,0,8,0"
+                                FontFamily="Consolas" Padding="16,8"/>
+                        <Button Content="Restore" Click="RestoreQuarantine_Click" Margin="0,0,8,0"
+                                FontFamily="Consolas" Padding="16,8"/>
+                        <Button Content="Delete" Click="DeleteQuarantine_Click"
+                                FontFamily="Consolas" Padding="16,8"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding QuarantineStatusText}" FontSize="11"
+                               FontFamily="Consolas" Foreground="{StaticResource NeonMagenta}"/>
                 </StackPanel>
 
                 <!-- List -->

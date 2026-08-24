@@ -122,6 +122,13 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         set { _selectedQuarantineId = value; OnPropertyChanged(); }
     }
 
+    private string _quarantineStatusText = "";
+    public string QuarantineStatusText
+    {
+        get => _quarantineStatusText;
+        set { _quarantineStatusText = value; OnPropertyChanged(); }
+    }
+
     public async Task ScanFileAsync()
     {
         var dialog = new Microsoft.Win32.OpenFileDialog { Title = "Select file to scan" };
@@ -256,7 +263,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         if (response == "QUARANTINE_LIST:EMPTY") return;
 
-        var lines = response.Split('\n');
+        var payload = response.StartsWith("QUARANTINE_LIST:") ? response[16..] : response;
+        var lines = payload.Split('\u001f');
         foreach (var line in lines)
         {
             if (!line.StartsWith("QUARANTINE_ENTRY:")) continue;
@@ -279,15 +287,25 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public async Task RestoreSelectedAsync()
     {
-        if (!IsConnected || string.IsNullOrEmpty(SelectedQuarantineId)) return;
-        await _ipc.SendCommandAsync($"RESTORE_FILE {SelectedQuarantineId}");
+        QuarantineStatusText = "";
+        if (!IsConnected) { QuarantineStatusText = "Not connected to service."; return; }
+        if (string.IsNullOrEmpty(SelectedQuarantineId)) { QuarantineStatusText = "Select an item first."; return; }
+
+        var response = await _ipc.SendCommandAsync($"RESTORE_FILE {SelectedQuarantineId}");
+        QuarantineStatusText = response != null && response.StartsWith("OK:") ? "File restored."
+            : response?.StartsWith("ERR:") == true ? response[4..] : "Restore failed.";
         await LoadQuarantineAsync();
     }
 
     public async Task DeleteSelectedAsync()
     {
-        if (!IsConnected || string.IsNullOrEmpty(SelectedQuarantineId)) return;
-        await _ipc.SendCommandAsync($"DELETE_FILE {SelectedQuarantineId}");
+        QuarantineStatusText = "";
+        if (!IsConnected) { QuarantineStatusText = "Not connected to service."; return; }
+        if (string.IsNullOrEmpty(SelectedQuarantineId)) { QuarantineStatusText = "Select an item first."; return; }
+
+        var response = await _ipc.SendCommandAsync($"DELETE_FILE {SelectedQuarantineId}");
+        QuarantineStatusText = response != null && response.StartsWith("OK:") ? "File deleted."
+            : response?.StartsWith("ERR:") == true ? response[4..] : "Delete failed.";
         await LoadQuarantineAsync();
     }
 

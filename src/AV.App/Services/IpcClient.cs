@@ -12,6 +12,7 @@ public class IpcClient : IDisposable
     private StreamWriter? _writer;
     private bool _authenticated;
     private int _connecting;
+    private readonly SemaphoreSlim _gate = new(1, 1);
 
     public bool IsConnected => _client?.IsConnected == true && _authenticated;
 
@@ -75,11 +76,12 @@ public class IpcClient : IDisposable
 
     public async Task<string?> SendCommandAsync(string command, CancellationToken ct = default)
     {
-        if (_writer == null || _reader == null || !IsConnected)
-            return null;
-
+        await _gate.WaitAsync(ct);
         try
         {
+            if (_writer == null || _reader == null || !IsConnected)
+                return null;
+
             await _writer.WriteLineAsync(command);
             return await _reader.ReadLineAsync(ct);
         }
@@ -88,17 +90,22 @@ public class IpcClient : IDisposable
             Disconnect();
             return null;
         }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     public async Task<List<string>> SendScanCommandAsync(string path, Action<string>? onLineReceived, CancellationToken ct = default)
     {
+        await _gate.WaitAsync(ct);
         var responses = new List<string>();
-
-        if (_writer == null || _reader == null || !IsConnected)
-            return responses;
 
         try
         {
+            if (_writer == null || _reader == null || !IsConnected)
+                return responses;
+
             await _writer.WriteLineAsync($"START_SCAN {path}");
 
             while (!ct.IsCancellationRequested)
@@ -116,6 +123,10 @@ public class IpcClient : IDisposable
         catch
         {
             Disconnect();
+        }
+        finally
+        {
+            _gate.Release();
         }
 
         return responses;

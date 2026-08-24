@@ -81,9 +81,17 @@ public class IpcServer : IDisposable
                 var line = await reader.ReadLineAsync(ct);
                 if (line == null) break;
 
-                var response = await ProcessCommandAsync(line, writer, ct);
-                if (response != null)
-                    await writer.WriteLineAsync(response);
+                try
+                {
+                    var response = await ProcessCommandAsync(line, writer, ct);
+                    if (response != null)
+                        await writer.WriteLineAsync(response);
+                }
+                catch (Exception ex)
+                {
+                    await _logger.LogAsync("ERROR", $"Command failed: {line} -> {ex.Message}", "IpcServer", ct);
+                    try { await writer.WriteLineAsync($"ERR:{ex.Message}"); } catch { }
+                }
             }
         }
         catch (OperationCanceledException) { }
@@ -186,10 +194,12 @@ public class IpcServer : IDisposable
         if (entries.Count == 0)
             return "QUARANTINE_LIST:EMPTY";
 
+        // Send as a SINGLE line. The client reads one line per command, so entries
+        // must be joined with a separator that is not a newline.
         var lines = entries.Select(e =>
             $"QUARANTINE_ENTRY:{e.Id}|{e.OriginalFileName}|{e.ThreatName}|{e.QuarantinedAt:O}|{e.OriginalPath}");
 
-        return string.Join("\n", lines);
+        return "QUARANTINE_LIST:" + string.Join("\u001f", lines);
     }
 
     private async Task<string> HandleRestoreFileAsync(string quarantineId, CancellationToken ct)
