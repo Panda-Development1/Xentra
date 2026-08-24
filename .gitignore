@@ -3,6 +3,7 @@ bin/
 obj/
 *.user
 *.suo
+XentraLogo.png
 *.userosscache
 *.sln.docstats
 *.nupkg

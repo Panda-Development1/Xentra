@@ -16,4 +16,12 @@
     <Page Include="..\Shared\NeonTheme.xaml" Link="NeonTheme.xaml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Assets\Logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.Collections.ObjectModel"/>
+  </ItemGroup>
+
 </Project>

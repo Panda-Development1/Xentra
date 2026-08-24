@@ -1,7 +1,6 @@
 using System.IO.Pipes;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using AV.Engine.Interfaces;
 using AV.Engine.Models;
 using AV.Service.Models;
@@ -75,13 +74,16 @@ public class IpcServer : IDisposable
                 return;
             }
 
+            await writer.WriteLineAsync("OK:Authenticated");
+
             while (!ct.IsCancellationRequested && server.IsConnected)
             {
                 var line = await reader.ReadLineAsync(ct);
                 if (line == null) break;
 
-                var response = await ProcessCommandAsync(line, ct);
-                await writer.WriteLineAsync(response);
+                var response = await ProcessCommandAsync(line, writer, ct);
+                if (response != null)
+                    await writer.WriteLineAsync(response);
             }
         }
         catch { }
@@ -91,7 +93,7 @@ public class IpcServer : IDisposable
         }
     }
 
-    private async Task<string> ProcessCommandAsync(string command, CancellationToken ct)
+    private async Task<string?> ProcessCommandAsync(string command, StreamWriter writer, CancellationToken ct)
     {
         var parts = command.Split(' ', 2);
         var cmd = parts[0].ToUpperInvariant();
@@ -99,29 +101,61 @@ public class IpcServer : IDisposable
 
         return cmd switch
         {
-            "GET_STATUS" => JsonSerializer.Serialize(new { Status = "Running", ScannedCount = 0 }),
-            "START_SCAN" => await HandleStartScanAsync(arg, ct),
+            "GET_STATUS" => await HandleGetStatusAsync(ct),
+            "START_SCAN" => await HandleStartScanAsync(arg, writer, ct),
             "GET_QUARANTINE_LIST" => await HandleGetQuarantineListAsync(ct),
             "RESTORE_FILE" => await HandleRestoreFileAsync(arg, ct),
             "DELETE_FILE" => await HandleDeleteFileAsync(arg, ct),
+            "PING" => "PONG",
             _ => "ERR:Unknown command"
         };
     }
 
-    private async Task<string> HandleStartScanAsync(string path, CancellationToken ct)
+    private async Task<string> HandleGetStatusAsync(CancellationToken ct)
+    {
+        var quarantineEntries = await _quarantine.ListAsync(ct);
+        return $"STATUS:Running|Quarantined:{quarantineEntries.Count}";
+    }
+
+    private async Task<string> HandleStartScanAsync(string path, StreamWriter writer, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(path))
             return "ERR:No path specified";
 
-        if (Directory.Exists(path))
-        {
-            var results = await _scanner.ScanDirectoryAsync(path, ct);
-            return JsonSerializer.Serialize(results);
-        }
-        else if (File.Exists(path))
+        if (File.Exists(path))
         {
             var result = await _scanner.ScanFileAsync(path, ct);
-            return JsonSerializer.Serialize(result);
+            await writer.WriteLineAsync($"SCAN_RESULT:{result.Status}|{result.FilePath}");
+            if (result.Detection != null)
+                await writer.WriteLineAsync($"SCAN_DETECTION:{result.Detection.ThreatName}|{result.FilePath}");
+            await writer.WriteLineAsync("SCAN_COMPLETE:1|" + (result.Status == "Threat" ? "1" : "0") + "|0");
+            return null;
+        }
+
+        if (Directory.Exists(path))
+        {
+            int total = 0, threats = 0, errors = 0;
+
+            await writer.WriteLineAsync("SCAN_STARTING");
+
+            var results = await _scanner.ScanDirectoryAsync(path, ct);
+
+            foreach (var r in results)
+            {
+                total++;
+                if (r.Status == "Threat") threats++;
+                if (r.Status == "Error") errors++;
+
+                await writer.WriteLineAsync($"SCAN_RESULT:{r.Status}|{r.FilePath}");
+                if (r.Detection != null)
+                    await writer.WriteLineAsync($"SCAN_DETECTION:{r.Detection.ThreatName}|{r.FilePath}");
+
+                if (total % 10 == 0)
+                    await writer.WriteLineAsync($"SCAN_PROGRESS:{total}|{r.FilePath}");
+            }
+
+            await writer.WriteLineAsync($"SCAN_COMPLETE:{total}|{threats}|{errors}");
+            return null;
         }
 
         return "ERR:Path not found";
@@ -130,7 +164,13 @@ public class IpcServer : IDisposable
     private async Task<string> HandleGetQuarantineListAsync(CancellationToken ct)
     {
         var entries = await _quarantine.ListAsync(ct);
-        return JsonSerializer.Serialize(entries);
+        if (entries.Count == 0)
+            return "QUARANTINE_LIST:EMPTY";
+
+        var lines = entries.Select(e =>
+            $"QUARANTINE_ENTRY:{e.Id}|{e.OriginalFileName}|{e.ThreatName}|{e.QuarantinedAt:O}|{e.OriginalPath}");
+
+        return string.Join("\n", lines);
     }
 
     private async Task<string> HandleRestoreFileAsync(string quarantineId, CancellationToken ct)
