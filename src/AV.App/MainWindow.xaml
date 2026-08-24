@@ -1,0 +1,62 @@
+<Window x:Class="AV.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Xentra AV" Height="600" Width="800"
+        Background="{StaticResource DarkBackground}"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="XENTRA AV" FontSize="32" FontWeight="Bold"
+                   Foreground="{StaticResource NeonCyan}" FontFamily="Consolas"
+                   HorizontalAlignment="Center" Margin="0,0,0,16"/>
+
+        <Border Grid.Row="1" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
+                BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Status" Foreground="{StaticResource NeonMagenta}" FontFamily="Consolas" FontWeight="Bold"/>
+                <TextBlock x:Name="StatusText" Text="Ready" Foreground="{StaticResource NeonGreen}"
+                           FontFamily="Consolas" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
+                BorderThickness="1" CornerRadius="8" Padding="16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                    <Button Content="Scan File" Click="ScanFileButton_Click" Margin="0,0,8,0"
+                            Background="{StaticResource DarkBorder}" Foreground="{StaticResource NeonCyan}"
+                            FontFamily="Consolas" Padding="16,8" BorderThickness="1"
+                            BorderBrush="{StaticResource NeonCyan}"/>
+                    <Button Content="Scan Directory" Click="ScanDirectoryButton_Click" Margin="0,0,8,0"
+                            Background="{StaticResource DarkBorder}" Foreground="{StaticResource NeonCyan}"
+                            FontFamily="Consolas" Padding="16,8" BorderThickness="1"
+                            BorderBrush="{StaticResource NeonCyan}"/>
+                    <Button Content="Quarantine List" Click="QuarantineListButton_Click"
+                            Background="{StaticResource DarkBorder}" Foreground="{StaticResource NeonCyan}"
+                            FontFamily="Consolas" Padding="16,8" BorderThickness="1"
+                            BorderBrush="{StaticResource NeonCyan}"/>
+                </StackPanel>
+
+                <ListBox Grid.Row="1" x:Name="ResultsList" Background="Transparent"
+                         Foreground="{StaticResource NeonGreen}" FontFamily="Consolas"
+                         BorderThickness="0"/>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+            <ProgressBar x:Name="ScanProgress" Width="400" Height="8" Minimum="0" Maximum="100"
+                         Foreground="{StaticResource NeonCyan}" Background="{StaticResource DarkBorder}"/>
+        </StackPanel>
+    </Grid>
+</Window>
