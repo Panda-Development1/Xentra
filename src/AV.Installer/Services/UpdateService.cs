@@ -1,7 +1,5 @@
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -20,17 +18,14 @@ public class UpdateInfo
 
 public class UpdateService
 {
-    private const string RepoOwner = "Panda-Development1";
-    private const string RepoName = "Xentra";
+    // Raw file in the repo — readable without auth or special token scopes.
+    private const string UpdateManifestUrl = "https://raw.githubusercontent.com/Panda-Development1/Xentra/main/update.json";
 
     private readonly HttpClient _http;
 
     public UpdateService()
     {
         _http = new HttpClient();
-        var token = Environment.GetEnvironmentVariable("XENTRA_GITHUB_TOKEN") ?? "";
-        if (!string.IsNullOrEmpty(token))
-            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("XentraAV-Installer", "1.0"));
     }
 
@@ -39,17 +34,22 @@ public class UpdateService
         var currentVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
         var currentStr = $"{currentVersion.Major}.{currentVersion.Minor}.{currentVersion.Build}";
 
-        var response = await _http.GetAsync($"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest");
-        if (!response.IsSuccessStatusCode)
+        string json;
+        try
+        {
+            json = await _http.GetStringAsync(UpdateManifestUrl);
+        }
+        catch
+        {
             return null;
+        }
 
-        var json = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
-        var tagName = root.GetProperty("tag_name").GetString() ?? "";
-        var latestVersion = tagName.TrimStart('v');
-        var releaseNotes = root.GetProperty("body").GetString() ?? "";
+        var latestVersion = root.GetProperty("version").GetString() ?? "";
+        var downloadUrl = root.GetProperty("downloadUrl").GetString() ?? "";
+        var notes = root.TryGetProperty("notes", out var n) ? n.GetString() ?? "" : "";
 
         if (!Version.TryParse(latestVersion, out var latest) || !Version.TryParse(currentStr, out var current))
             return null;
@@ -57,29 +57,16 @@ public class UpdateService
         if (latest <= current)
             return null;
 
-        string? downloadUrl = null;
-        if (root.TryGetProperty("assets", out var assets))
-        {
-            foreach (var asset in assets.EnumerateArray())
-            {
-                var name = asset.GetProperty("name").GetString() ?? "";
-                if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                {
-                    downloadUrl = asset.GetProperty("browser_download_url").GetString();
-                    break;
-                }
-            }
-        }
-
         return new UpdateInfo
         {
             CurrentVersion = currentStr,
             LatestVersion = latestVersion,
-            DownloadUrl = downloadUrl ?? "",
-            ReleaseNotes = releaseNotes
+            DownloadUrl = downloadUrl,
+            ReleaseNotes = notes
         };
     }
 
+    // Downloads the new installer exe into a temp folder and returns that folder.
     public async Task<string> DownloadUpdateAsync(IProgress<double>? progress = null)
     {
         var updateInfo = await CheckForUpdateAsync();
@@ -87,12 +74,12 @@ public class UpdateService
             throw new InvalidOperationException("No update available");
 
         if (string.IsNullOrEmpty(updateInfo.DownloadUrl))
-            throw new InvalidOperationException("No download URL found in release assets");
+            throw new InvalidOperationException("Update manifest has no download URL");
 
         var tempDir = Path.Combine(Path.GetTempPath(), "XentraAV_Update_" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(tempDir);
 
-        var zipPath = Path.Combine(tempDir, "update.zip");
+        var exePath = Path.Combine(tempDir, "AV.Installer.exe");
 
         using (var response = await _http.GetAsync(updateInfo.DownloadUrl, HttpCompletionOption.ResponseHeadersRead))
         {
@@ -100,7 +87,7 @@ public class UpdateService
             var totalBytes = response.Content.Headers.ContentLength ?? -1L;
 
             await using var contentStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await using var fileStream = new FileStream(exePath, FileMode.Create, FileAccess.Write, FileShare.None);
             var buffer = new byte[8192];
             long totalRead = 0;
             int bytesRead;
@@ -115,11 +102,6 @@ public class UpdateService
         }
 
         progress?.Report(100);
-
-        var extractDir = Path.Combine(tempDir, "extracted");
-        ZipFile.ExtractToDirectory(zipPath, extractDir);
-        File.Delete(zipPath);
-
-        return extractDir;
+        return tempDir;
     }
 }

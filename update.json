@@ -1,0 +1,5 @@
+{
+  "version": "1.0.1",
+  "downloadUrl": "https://github.com/Panda-Development1/Xentra/releases/download/v1.0.1/AV.Installer.exe",
+  "notes": "Quarantine protocol fix, service loads malware signatures at startup, IPC errors no longer drop the connection, restore/delete now report status."
+}
