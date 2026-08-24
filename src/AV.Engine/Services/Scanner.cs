@@ -111,32 +111,54 @@ public class Scanner : IScanner
             return Array.Empty<ScanResult>();
 
         var results = new List<ScanResult>();
-        var files = Directory.EnumerateFiles(directoryPath, "*", new EnumerationOptions
+
+        IEnumerable<string> files;
+        try
         {
-            RecurseSubdirectories = true,
-            IgnoreInaccessible = true,
-            AttributesToSkip = FileAttributes.ReparsePoint
-        });
+            files = Directory.EnumerateFiles(directoryPath, "*", new EnumerationOptions
+            {
+                RecurseSubdirectories = true,
+                IgnoreInaccessible = true,
+                AttributesToSkip = FileAttributes.ReparsePoint
+            });
+        }
+        catch (Exception ex)
+        {
+            _ = _logger.LogAsync("ERROR", $"Failed to enumerate directory {directoryPath}: {ex.Message}", "Scanner", ct);
+            return results.AsReadOnly();
+        }
 
         var semaphore = new SemaphoreSlim(Environment.ProcessorCount);
         var tasks = new List<Task>();
 
-        foreach (var file in files)
+        try
         {
-            if (IsExcluded(file)) continue;
-            await semaphore.WaitAsync(ct);
-            tasks.Add(Task.Run(async () =>
+            foreach (var file in files)
             {
-                try
+                ct.ThrowIfCancellationRequested();
+
+                if (IsExcluded(file)) continue;
+                await semaphore.WaitAsync(ct);
+                tasks.Add(Task.Run(async () =>
                 {
-                    var result = await ScanFileAsync(file, ct);
-                    lock (results) { results.Add(result); }
-                }
-                finally { semaphore.Release(); }
-            }, ct));
+                    try
+                    {
+                        var result = await ScanFileAsync(file, ct);
+                        lock (results) { results.Add(result); }
+                    }
+                    catch (OperationCanceledException) { }
+                    finally { semaphore.Release(); }
+                }));
+            }
+
+            await Task.WhenAll(tasks);
+        }
+        catch (OperationCanceledException)
+        {
+            foreach (var t in tasks)
+                if (t.Exception != null) _ = t.Exception; // observe to avoid UnobservedTaskException
         }
 
-        await Task.WhenAll(tasks);
         return results.AsReadOnly();
     }
 

@@ -86,7 +86,11 @@ public class IpcServer : IDisposable
                     await writer.WriteLineAsync(response);
             }
         }
-        catch { }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            await _logger.LogAsync("ERROR", $"Client handler error: {ex.Message}", "IpcServer", ct);
+        }
         finally
         {
             server.Dispose();
@@ -122,43 +126,58 @@ public class IpcServer : IDisposable
         if (string.IsNullOrWhiteSpace(path))
             return "ERR:No path specified";
 
-        if (File.Exists(path))
+        try
         {
-            var result = await _scanner.ScanFileAsync(path, ct);
-            await writer.WriteLineAsync($"SCAN_RESULT:{result.Status}|{result.FilePath}");
-            if (result.Detection != null)
-                await writer.WriteLineAsync($"SCAN_DETECTION:{result.Detection.ThreatName}|{result.FilePath}");
-            await writer.WriteLineAsync("SCAN_COMPLETE:1|" + (result.Status == "Threat" ? "1" : "0") + "|0");
-            return null;
-        }
-
-        if (Directory.Exists(path))
-        {
-            int total = 0, threats = 0, errors = 0;
-
-            await writer.WriteLineAsync("SCAN_STARTING");
-
-            var results = await _scanner.ScanDirectoryAsync(path, ct);
-
-            foreach (var r in results)
+            if (File.Exists(path))
             {
-                total++;
-                if (r.Status == "Threat") threats++;
-                if (r.Status == "Error") errors++;
-
-                await writer.WriteLineAsync($"SCAN_RESULT:{r.Status}|{r.FilePath}");
-                if (r.Detection != null)
-                    await writer.WriteLineAsync($"SCAN_DETECTION:{r.Detection.ThreatName}|{r.FilePath}");
-
-                if (total % 10 == 0)
-                    await writer.WriteLineAsync($"SCAN_PROGRESS:{total}|{r.FilePath}");
+                var result = await _scanner.ScanFileAsync(path, ct);
+                await writer.WriteLineAsync($"SCAN_RESULT:{result.Status}|{result.FilePath}");
+                if (result.Detection != null)
+                    await writer.WriteLineAsync($"SCAN_DETECTION:{result.Detection.ThreatName}|{result.FilePath}");
+                await writer.WriteLineAsync("SCAN_COMPLETE:1|" + (result.Status == "Threat" ? "1" : "0") + "|0");
+                return null;
             }
 
-            await writer.WriteLineAsync($"SCAN_COMPLETE:{total}|{threats}|{errors}");
+            if (Directory.Exists(path))
+            {
+                int total = 0, threats = 0, errors = 0;
+
+                await writer.WriteLineAsync("SCAN_STARTING");
+
+                var results = await _scanner.ScanDirectoryAsync(path, ct);
+
+                foreach (var r in results)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    total++;
+                    if (r.Status == "Threat") threats++;
+                    if (r.Status == "Error") errors++;
+
+                    await writer.WriteLineAsync($"SCAN_RESULT:{r.Status}|{r.FilePath}");
+                    if (r.Detection != null)
+                        await writer.WriteLineAsync($"SCAN_DETECTION:{r.Detection.ThreatName}|{r.FilePath}");
+
+                    if (total % 10 == 0)
+                        await writer.WriteLineAsync($"SCAN_PROGRESS:{total}|{r.FilePath}");
+                }
+
+                await writer.WriteLineAsync($"SCAN_COMPLETE:{total}|{threats}|{errors}");
+                return null;
+            }
+
+            return "ERR:Path not found";
+        }
+        catch (OperationCanceledException)
+        {
+            await writer.WriteLineAsync("ERR:Scan cancelled");
             return null;
         }
-
-        return "ERR:Path not found";
+        catch (Exception ex)
+        {
+            await _logger.LogAsync("ERROR", $"Scan failed for {path}: {ex.Message}", "IpcServer", ct);
+            return $"ERR:Scan failed - {ex.Message}";
+        }
     }
 
     private async Task<string> HandleGetQuarantineListAsync(CancellationToken ct)

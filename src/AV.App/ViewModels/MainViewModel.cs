@@ -152,10 +152,28 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         _scanCts = new CancellationTokenSource();
 
-        await _ipc.SendScanCommandAsync(path, line =>
+        try
         {
-            Application.Current.Dispatcher.Invoke(() => HandleScanLine(line));
-        }, _scanCts.Token);
+            await _ipc.SendScanCommandAsync(path, line =>
+            {
+                var app = Application.Current;
+                if (app != null)
+                    app.Dispatcher.Invoke(() => HandleScanLine(line));
+            }, _scanCts.Token);
+        }
+        catch
+        {
+            IsScanning = false;
+            ScanStatusText = "Scan failed.";
+        }
+        finally
+        {
+            if (IsScanning)
+            {
+                IsScanning = false;
+                ScanStatusText = "Scan interrupted.";
+            }
+        }
     }
 
     private void HandleScanLine(string line)
@@ -208,7 +226,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
                 _ = Task.Delay(3000).ContinueWith(_ =>
                 {
-                    Application.Current.Dispatcher.Invoke(() => CurrentView = ViewType.Dashboard);
+                    var app = Application.Current;
+                    if (app != null)
+                        app.Dispatcher.Invoke(() => CurrentView = ViewType.Dashboard);
                 });
             }
         }
