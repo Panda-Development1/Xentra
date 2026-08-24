@@ -112,6 +112,15 @@ public partial class MainWindow : Window
             PercentText.Text = "100%";
             CompletePathText.Text = $"Installed to: {_installPath}";
             GoToStep(4);
+
+            // Auto-launch AV.App after install
+            try
+            {
+                var exePath = Path.Combine(_installPath, "AV.App.exe");
+                if (File.Exists(exePath))
+                    Process.Start(new ProcessStartInfo(exePath) { UseShellExecute = true });
+            }
+            catch { }
         }
         catch (Exception ex)
         {
