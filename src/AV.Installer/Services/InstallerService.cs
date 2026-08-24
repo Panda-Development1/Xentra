@@ -14,7 +14,7 @@ public class InstallerService
         _logger = logger;
     }
 
-    public async Task InstallAsync(string installPath, bool pinToTaskbar, bool createDesktopShortcut)
+    public async Task InstallAsync(string installPath, bool pinToTaskbar, bool createDesktopShortcut, IProgress<double>? progress = null)
     {
         _logger.Log("Starting installation...");
 
@@ -22,6 +22,7 @@ public class InstallerService
         {
             _logger.Log($"Creating directory: {installPath}");
             Directory.CreateDirectory(installPath);
+            progress?.Report(10);
 
             string programData = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
@@ -31,15 +32,18 @@ public class InstallerService
             Directory.CreateDirectory(Path.Combine(programData, "Quarantine"));
             Directory.CreateDirectory(Path.Combine(programData, "Logs"));
             Directory.CreateDirectory(Path.Combine(programData, "Signatures"));
+            progress?.Report(20);
 
             _logger.Log("Setting quarantine ACLs (SYSTEM + Admins only)...");
             SetQuarantineAcl(Path.Combine(programData, "Quarantine"));
+            progress?.Report(30);
 
             _logger.Log("Copying files...");
-            await CopyFilesAsync(installPath);
+            await CopyFilesAsync(installPath, progress);
 
             _logger.Log("Registering Windows service...");
             RegisterService(installPath);
+            progress?.Report(80);
 
             if (createDesktopShortcut)
             {
@@ -55,6 +59,7 @@ public class InstallerService
                     "Microsoft", "Internet Explorer", "Quick Launch", "User Pinned", "TaskBar"));
             }
 
+            progress?.Report(100);
             _logger.Log("Installation complete!");
         }
         catch (Exception ex)
@@ -64,10 +69,12 @@ public class InstallerService
         }
     }
 
-    private async Task CopyFilesAsync(string installPath)
+    private async Task CopyFilesAsync(string installPath, IProgress<double>? progress = null)
     {
         string sourceDir = AppDomain.CurrentDomain.BaseDirectory;
         var files = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
+        int total = files.Length;
+        int copied = 0;
 
         foreach (var file in files)
         {
@@ -78,10 +85,14 @@ public class InstallerService
             if (dir != null) Directory.CreateDirectory(dir);
 
             File.Copy(file, destPath, true);
+            copied++;
             _logger.Log($"  Copied: {relativePath}");
-        }
 
-        await Task.CompletedTask;
+            if (total > 0)
+                progress?.Report(30 + (double)copied / total * 50);
+
+            await Task.Yield();
+        }
     }
 
     private void RegisterService(string installPath)

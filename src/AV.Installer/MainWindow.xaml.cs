@@ -91,12 +91,12 @@ public partial class MainWindow : Window
         var logger = new InstallLogger(LogText, LogScroller);
         var service = new InstallerService(logger);
 
-        var progressReporter = new Progress<int>(value =>
+        var progress = new Progress<double>(value =>
         {
             Dispatcher.Invoke(() =>
             {
                 InstallProgress.Value = value;
-                PercentText.Text = $"{value}%";
+                PercentText.Text = $"{value:F0}%";
             });
         });
 
@@ -105,7 +105,8 @@ public partial class MainWindow : Window
             await service.InstallAsync(
                 _installPath,
                 PinToTaskbarCheckBox.IsChecked == true,
-                DesktopShortcutCheckBox.IsChecked == true);
+                DesktopShortcutCheckBox.IsChecked == true,
+                progress);
 
             InstallProgress.Value = 100;
             PercentText.Text = "100%";

@@ -120,9 +120,9 @@
 
                         <Button x:Name="BeginButton" Content="BEGIN INSTALLATION" Click="BeginButton_Click"
                                 HorizontalAlignment="Center" Padding="40,14"
-                                Background="{StaticResource NeonCyan}" Foreground="{StaticResource DarkBackground}"
+                                Background="{StaticResource DarkBorder}" Foreground="{StaticResource NeonCyan}"
                                 FontFamily="Consolas" FontSize="16" FontWeight="Bold"
-                                BorderThickness="0" Cursor="Hand"/>
+                                BorderThickness="2" BorderBrush="{StaticResource NeonCyan}" Cursor="Hand"/>
                     </StackPanel>
                 </Grid>
 
