@@ -11,6 +11,7 @@ public class IpcClient : IDisposable
     private StreamReader? _reader;
     private StreamWriter? _writer;
     private bool _authenticated;
+    private int _connecting;
 
     public bool IsConnected => _client?.IsConnected == true && _authenticated;
 
@@ -21,6 +22,10 @@ public class IpcClient : IDisposable
 
     public async Task<bool> ConnectAsync(CancellationToken ct = default)
     {
+        // Prevent the reconnect timer and the initial connect from racing on the same pipe.
+        if (Interlocked.Exchange(ref _connecting, 1) == 1)
+            return false;
+
         try
         {
             _client = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
@@ -50,6 +55,10 @@ public class IpcClient : IDisposable
         {
             Disconnect();
             return false;
+        }
+        finally
+        {
+            _connecting = 0;
         }
     }
 

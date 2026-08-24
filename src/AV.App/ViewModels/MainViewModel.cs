@@ -154,12 +154,16 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            await _ipc.SendScanCommandAsync(path, line =>
+            // Run the pipe read loop on a pool thread so it never re-enters the UI dispatcher.
+            await Task.Run(() => _ipc.SendScanCommandAsync(path, line =>
             {
                 var app = Application.Current;
-                if (app != null)
-                    app.Dispatcher.Invoke(() => HandleScanLine(line));
-            }, _scanCts.Token);
+                if (app != null && !app.Dispatcher.HasShutdownStarted)
+                {
+                    try { app.Dispatcher.Invoke(() => HandleScanLine(line)); }
+                    catch { }
+                }
+            }, _scanCts.Token), _scanCts.Token);
         }
         catch
         {
@@ -193,13 +197,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             var parts = line[12..].Split('|', 2);
             string status = parts[0];
             string filePath = parts.Length > 1 ? parts[1] : "";
-            string fileName = Path.GetFileName(filePath);
 
             ScannedFiles++;
-            ScanResults.Add($"{status}: {fileName}");
-
+            // Only surface actual threats in the list — inaccessible/skipped files
+            // would otherwise flood the UI with thousands of "Error:" lines.
             if (status == "Threat")
+            {
                 ThreatsFound++;
+                ScanResults.Add($"THREAT: {Path.GetFileName(filePath)}");
+            }
         }
         else if (line.StartsWith("SCAN_DETECTION:"))
         {
