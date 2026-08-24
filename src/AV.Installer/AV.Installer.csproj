@@ -12,6 +12,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AV.Engine\AV.Engine.csproj" />
+    <ProjectReference Include="..\AV.App\AV.App.csproj" />
+    <ProjectReference Include="..\AV.Service\AV.Service.csproj" />
   </ItemGroup>
 
   <ItemGroup>

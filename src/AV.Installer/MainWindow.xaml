@@ -225,9 +225,9 @@
 
                         <Button Content="CLOSE" Click="CloseButton_Click"
                                 HorizontalAlignment="Center" Padding="30,10"
-                                Background="Transparent" Foreground="{StaticResource DarkBorder}"
+                                Background="{StaticResource DarkBorder}" Foreground="{StaticResource NeonCyan}"
                                 FontFamily="Consolas" FontSize="13"
-                                BorderThickness="1" BorderBrush="{StaticResource DarkBorder}" Cursor="Hand"/>
+                                BorderThickness="1" BorderBrush="{StaticResource NeonCyan}" Cursor="Hand"/>
                     </StackPanel>
                 </Grid>
 
