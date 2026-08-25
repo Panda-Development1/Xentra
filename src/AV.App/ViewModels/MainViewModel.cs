@@ -26,12 +26,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public ViewType CurrentView
     {
         get => _currentView;
-        set { _currentView = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsDashboardVisible)); OnPropertyChanged(nameof(IsScanVisible)); OnPropertyChanged(nameof(isQuarantineVisible)); }
+        set {         _currentView = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsDashboardVisible)); OnPropertyChanged(nameof(IsScanVisible)); OnPropertyChanged(nameof(IsQuarantineVisible)); }
     }
 
     public bool IsDashboardVisible => CurrentView == ViewType.Dashboard;
     public bool IsScanVisible => CurrentView == ViewType.Scan;
-    public bool isQuarantineVisible => CurrentView == ViewType.Quarantine;
+    public bool IsQuarantineVisible => CurrentView == ViewType.Quarantine;
 
     private string _statusText = "Disconnected";
     public string StatusText

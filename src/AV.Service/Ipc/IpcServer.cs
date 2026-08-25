@@ -23,6 +23,10 @@ public class IpcServer : IDisposable
         _pipeName = pipeName;
     }
 
+    // Set by the host so the real-time shield stops re-quarantining a file the user
+    // just restored. Receives the original (restored) path.
+    public Action<string>? OnFileRestored { get; set; }
+
     public void Start(CancellationToken ct)
     {
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -45,14 +49,18 @@ public class IpcServer : IDisposable
         {
             var server = new NamedPipeServerStream(_pipeName, PipeDirection.InOut,
                 NamedPipeServerStream.MaxAllowedServerInstances,
-                PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+                PipeTransmissionMode.Byte, PipeOptions.None);
 
             try
             {
                 await server.WaitForConnectionAsync(ct);
                 _ = HandleClientAsync(server, ct);
             }
-            catch (OperationCanceledException) { break; }
+            catch (OperationCanceledException)
+            {
+                server.Dispose();
+                break;
+            }
             catch { server.Dispose(); }
         }
     }
@@ -63,8 +71,8 @@ public class IpcServer : IDisposable
 
         try
         {
-            using var reader = new StreamReader(server, Encoding.UTF8, leaveOpen: true);
-            using var writer = new StreamWriter(server, Encoding.UTF8, leaveOpen: true) { AutoFlush = true };
+            using var reader = new StreamReader(server, new UTF8Encoding(false));
+            using var writer = new StreamWriter(server, new UTF8Encoding(false)) { AutoFlush = true };
 
             await writer.WriteLineAsync($"AUTH:{token}");
             var authLine = await reader.ReadLineAsync(ct);
@@ -207,7 +215,12 @@ public class IpcServer : IDisposable
         if (string.IsNullOrWhiteSpace(quarantineId))
             return "ERR:No quarantine ID specified";
 
+        var entry = await _quarantine.GetEntryAsync(quarantineId, ct);
+        if (entry == null)
+            return "ERR:Quarantine entry not found";
+
         await _quarantine.RestoreAsync(quarantineId, ct);
+        OnFileRestored?.Invoke(Path.Combine(entry.OriginalPath, entry.OriginalFileName));
         return "OK:Restored";
     }
 

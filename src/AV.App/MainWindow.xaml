@@ -2,294 +2,409 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:AV.App.ViewModels"
-        Title="Xentra AV" Height="700" Width="1100"
-        Background="{StaticResource DarkBackground}"
-        WindowStartupLocation="CenterScreen"
-        Icon="Assets/Logo.png"
-        WindowState="Normal"
-        MinHeight="500" MinWidth="800">
+        Title="Xentra Security"
+        Height="720" Width="1120" MinHeight="540" MinWidth="860"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen" FontFamily="Segoe UI"
+        Icon="Assets/Logo.png">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="8" GlassFrameThickness="0"
+                      CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
 
-        <!-- Sidebar -->
-        <Border Grid.Column="0" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                BorderThickness="0,0,1,0">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Margin="16,20,16,24">
-                    <TextBlock Text="XENTRA" FontSize="22" FontWeight="Bold"
-                               Foreground="{StaticResource NeonCyan}" FontFamily="Consolas"/>
-                    <TextBlock Text="ANTIVIRUS" FontSize="11"
-                               Foreground="{StaticResource NeonMagenta}" FontFamily="Consolas" Margin="0,-2,0,0"/>
-                </StackPanel>
+    <Border x:Name="RootBorder" CornerRadius="14" Background="{StaticResource BgBase}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="34" ShadowDepth="0" Color="#000000" Opacity="0.55"/>
+        </Border.Effect>
 
-                <StackPanel DockPanel.Dock="Bottom" Margin="16,0,16,16">
-                    <Border Background="{StaticResource DarkBackground}" CornerRadius="6" Padding="10,8">
-                        <StackPanel>
-                            <TextBlock Text="SHIELD" FontSize="9" Foreground="{StaticResource NeonMagenta}"
-                                       FontWeight="Bold" FontFamily="Consolas"/>
-                            <TextBlock Text="{Binding ShieldStatus}" FontSize="11"
-                                       FontFamily="Consolas" Margin="0,2,0,0">
-                                <TextBlock.Foreground>
-                                    <SolidColorBrush Color="{Binding ShieldStatusColor}"/>
-                                </TextBlock.Foreground>
-                            </TextBlock>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
+        <Grid>
+            <!-- Ambient glow -->
+            <Grid IsHitTestVisible="False">
+                <Grid.Background>
+                    <RadialGradientBrush GradientOrigin="0.04,0.0" Center="0.04,0.0" RadiusX="0.75" RadiusY="0.75">
+                        <GradientStop Color="#3322D3EE" Offset="0"/>
+                        <GradientStop Color="#0022D3EE" Offset="0.55"/>
+                    </RadialGradientBrush>
+                </Grid.Background>
+                <Grid>
+                    <Grid.Background>
+                        <RadialGradientBrush GradientOrigin="0.96,1.0" Center="0.96,1.0" RadiusX="0.75" RadiusY="0.75">
+                            <GradientStop Color="#33B96BFB" Offset="0"/>
+                            <GradientStop Color="#00B96BFB" Offset="0.55"/>
+                        </RadialGradientBrush>
+                    </Grid.Background>
+                </Grid>
+            </Grid>
 
-                <StackPanel Margin="12,0">
-                    <Button Content="DASHBOARD" Click="Dashboard_Click"
-                            Padding="12,10" HorizontalContentAlignment="Left" Margin="0,0,0,4"
-                            FontFamily="Consolas" FontSize="11" FontWeight="Bold"/>
-                    <Button Content="SCAN" Click="ScanView_Click"
-                            Padding="12,10" HorizontalContentAlignment="Left" Margin="0,0,0,4"
-                            FontFamily="Consolas" FontSize="11" FontWeight="Bold"/>
-                    <Button Content="QUARANTINE" Click="QuarantineView_Click"
-                            Padding="12,10" HorizontalContentAlignment="Left" Margin="0,0,0,4"
-                            FontFamily="Consolas" FontSize="11" FontWeight="Bold"/>
-                </StackPanel>
-            </DockPanel>
-        </Border>
-
-        <!-- Main Content -->
-        <Grid Grid.Column="1" Margin="20">
-            <!-- Dashboard View -->
-            <Grid Visibility="{Binding IsDashboardVisible, Converter={StaticResource BoolToVisConverter}}">
+            <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="46"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Text="DASHBOARD" FontSize="20" FontWeight="Bold"
-                           Foreground="{StaticResource NeonCyan}" FontFamily="Consolas" Margin="0,0,0,20"/>
-
-                <!-- Status Cards -->
-                <Grid Grid.Row="1" Margin="0,0,0,16">
+                <!-- Title bar -->
+                <Grid x:Name="TitleBar" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
+                        <Path Data="{StaticResource IconShield}" Width="18" Height="18" Stretch="Uniform"
+                              Stroke="{StaticResource Accent}" StrokeThickness="1.6" Fill="{StaticResource Accent}" Opacity="0.9"/>
+                        <TextBlock Text="XENTRA" FontFamily="Consolas" FontWeight="Bold" FontSize="15"
+                                   Foreground="{StaticResource TextPrimary}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="SECURITY" FontFamily="Consolas" FontSize="10" Foreground="{StaticResource Accent2}"
+                                   VerticalAlignment="Center" Margin="6,3,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <Button Style="{StaticResource IconButton}" Click="Minimize_Click" ToolTip="Minimize">
+                            <Path Data="{StaticResource IconMin}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.8" StrokeEndLineCap="Round" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButton}" Click="Maximize_Click" ToolTip="Maximize">
+                            <Path Data="{StaticResource IconMax}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.8" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButton}" Click="Close_Click" ToolTip="Close">
+                            <Path Data="{StaticResource IconClose}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.8" StrokeEndLineCap="Round" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Body -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="234"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                            BorderThickness="1" CornerRadius="8" Padding="16">
-                        <StackPanel>
-                            <TextBlock Text="STATUS" FontSize="9" Foreground="{StaticResource NeonMagenta}"
-                                       FontWeight="Bold" FontFamily="Consolas"/>
-                            <TextBlock Text="{Binding StatusText}" FontSize="14" FontFamily="Consolas"
-                                       Foreground="{StaticResource NeonGreen}" Margin="0,6,0,0" TextWrapping="Wrap"/>
-                        </StackPanel>
+                    <!-- Sidebar -->
+                    <Border Style="{StaticResource GlassPanel}" Grid.Column="0" Margin="14,4,8,14" Padding="12,16">
+                        <DockPanel LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Top" Margin="0,4,0,0">
+                                <Button x:Name="NavDashboard" Style="{StaticResource NavButton}" Click="NavDashboard_Click" Margin="0,0,0,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Path x:Name="NavIconDashboard" Grid.Column="0" Data="{StaticResource IconDashboard}"
+                                              Stroke="{StaticResource TextMuted}" StrokeThickness="1.6" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="Dashboard" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        <Rectangle x:Name="DashDash" Grid.Column="0" Width="3" Height="22" Fill="{StaticResource Accent}"
+                                                   RadiusX="1.5" RadiusY="1.5" HorizontalAlignment="Left" Visibility="Collapsed"/>
+                                    </Grid>
+                                </Button>
+                                <Button x:Name="NavScan" Style="{StaticResource NavButton}" Click="NavScan_Click" Margin="0,0,0,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Path x:Name="NavIconScan" Grid.Column="0" Data="{StaticResource IconScan}"
+                                              Stroke="{StaticResource TextMuted}" StrokeThickness="1.6" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="Scan" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        <Rectangle x:Name="ScanDash" Grid.Column="0" Width="3" Height="22" Fill="{StaticResource Accent}"
+                                                   RadiusX="1.5" RadiusY="1.5" HorizontalAlignment="Left" Visibility="Collapsed"/>
+                                    </Grid>
+                                </Button>
+                                <Button x:Name="NavQuarantine" Style="{StaticResource NavButton}" Click="NavQuarantine_Click">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Path x:Name="NavIconQuarantine" Grid.Column="0" Data="{StaticResource IconQuarantine}"
+                                              Stroke="{StaticResource TextMuted}" StrokeThickness="1.6" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="Quarantine" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        <Rectangle x:Name="QuarDash" Grid.Column="0" Width="3" Height="22" Fill="{StaticResource Accent}"
+                                                   RadiusX="1.5" RadiusY="1.5" HorizontalAlignment="Left" Visibility="Collapsed"/>
+                                    </Grid>
+                                </Button>
+                            </StackPanel>
+
+                            <Border DockPanel.Dock="Bottom" Background="{StaticResource GlassFillStrong}" CornerRadius="10" Padding="12,10">
+                                <StackPanel>
+                                    <TextBlock Text="REAL-TIME SHIELD" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                        <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                                            <Ellipse.Fill>
+                                                <SolidColorBrush Color="{Binding ShieldStatusColor}"/>
+                                            </Ellipse.Fill>
+                                            <Ellipse.Effect>
+                                                <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="{Binding ShieldStatusColor}"/>
+                                            </Ellipse.Effect>
+                                        </Ellipse>
+                                        <TextBlock Text="{Binding ShieldStatus}" FontSize="12" Foreground="{StaticResource TextPrimary}"
+                                                   Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </DockPanel>
                     </Border>
 
-                    <Border Grid.Column="2" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                            BorderThickness="1" CornerRadius="8" Padding="16">
-                        <StackPanel>
-                            <TextBlock Text="QUARANTINED" FontSize="9" Foreground="{StaticResource NeonMagenta}"
-                                       FontWeight="Bold" FontFamily="Consolas"/>
-                            <TextBlock Text="{Binding QuarantineCount}" FontSize="28" FontFamily="Consolas"
-                                       Foreground="{StaticResource NeonCyan}" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </Border>
+                    <!-- Content -->
+                    <Grid Grid.Column="1" Margin="4,4,16,16">
 
-                    <Border Grid.Column="4" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                            BorderThickness="1" CornerRadius="8" Padding="16">
-                        <StackPanel>
-                            <TextBlock Text="REAL-TIME SHIELD" FontSize="9" Foreground="{StaticResource NeonMagenta}"
-                                       FontWeight="Bold" FontFamily="Consolas"/>
-                            <TextBlock Text="{Binding ShieldStatus}" FontSize="14" FontFamily="Consolas" Margin="0,6,0,0">
-                                <TextBlock.Foreground>
-                                    <SolidColorBrush Color="{Binding ShieldStatusColor}"/>
-                                </TextBlock.Foreground>
-                            </TextBlock>
-                        </StackPanel>
-                    </Border>
-                </Grid>
+                        <!-- Dashboard -->
+                        <Grid x:Name="DashboardView" Visibility="{Binding IsDashboardVisible, Converter={StaticResource BoolToVisConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                <!-- Quick Actions -->
-                <Border Grid.Row="2" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                        BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
-                    <StackPanel>
-                        <TextBlock Text="QUICK ACTIONS" FontSize="9" Foreground="{StaticResource NeonMagenta}"
-                                   FontWeight="Bold" FontFamily="Consolas" Margin="0,0,0,10"/>
-                        <StackPanel Orientation="Horizontal">
-                            <Button Content="Scan File" Click="ScanFileButton_Click" Margin="0,0,8,0"
-                                    FontFamily="Consolas" Padding="16,8"/>
-                            <Button Content="Scan Directory" Click="ScanDirectoryButton_Click" Margin="0,0,8,0"
-                                    FontFamily="Consolas" Padding="16,8"/>
-                            <Button Content="View Quarantine" Click="QuarantineView_Click"
-                                    FontFamily="Consolas" Padding="16,8"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
+                            <TextBlock Grid.Row="0" Text="Dashboard" Style="{StaticResource Heading}" Margin="4,2,0,18"/>
 
-                <!-- Recent Activity -->
-                <Border Grid.Row="3" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                        BorderThickness="1" CornerRadius="8" Padding="16">
-                    <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="RECENT ACTIVITY" FontSize="9"
-                                   Foreground="{StaticResource NeonMagenta}" FontWeight="Bold"
-                                   FontFamily="Consolas" Margin="0,0,0,10"/>
-                        <ListBox x:Name="ActivityList" Background="Transparent" BorderThickness="0"
-                                 Foreground="{StaticResource NeonGreen}" FontFamily="Consolas" FontSize="11"/>
-                    </DockPanel>
-                </Border>
-            </Grid>
+                            <Border Grid.Row="1" Style="{StaticResource GlassPanel}" Padding="22,20" Margin="0,0,0,16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Path Data="{StaticResource IconShield}" Stretch="Uniform" Width="60" Height="60"
+                                          Stroke="{StaticResource Green}" StrokeThickness="1.4" Fill="{StaticResource Green}" Opacity="0.18">
+                                        <Path.Effect>
+                                            <DropShadowEffect Color="{StaticResource C_Green}" BlurRadius="20" ShadowDepth="0" Opacity="0.85"/>
+                                        </Path.Effect>
+                                        <Path.Triggers>
+                                            <EventTrigger RoutedEvent="Loaded">
+                                                <BeginStoryboard>
+                                                    <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.34" Duration="0:0:2.4"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                        </Path.Triggers>
+                                    </Path>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0,0,0">
+                                        <TextBlock Text="Your system is protected" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+                                        <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,6,0,0"/>
+                                        <TextBlock FontSize="12" Foreground="{StaticResource Green}" Margin="0,2,0,0">
+                                            <Run Text="Real-time shield: "/><Run Text="{Binding ShieldStatus}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
 
-            <!-- Scan View -->
-            <Grid Visibility="{Binding IsScanVisible, Converter={StaticResource BoolToVisConverter}}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+                            <Grid Grid.Row="2" Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Style="{StaticResource GlassPanel}" Padding="18">
+                                    <StackPanel>
+                                        <TextBlock Text="THREATS BLOCKED" Style="{StaticResource SectionLabel}"/>
+                                        <TextBlock Text="{Binding ThreatsFound}" FontSize="30" FontWeight="Bold" Foreground="{StaticResource Red}" Margin="0,8,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Style="{StaticResource GlassPanel}" Padding="18">
+                                    <StackPanel>
+                                        <TextBlock Text="FILES SCANNED" Style="{StaticResource SectionLabel}"/>
+                                        <TextBlock Text="{Binding ScannedFiles}" FontSize="30" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="0,8,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="4" Style="{StaticResource GlassPanel}" Padding="18">
+                                    <StackPanel>
+                                        <TextBlock Text="QUARANTINED" Style="{StaticResource SectionLabel}"/>
+                                        <TextBlock Text="{Binding QuarantineCount}" FontSize="30" FontWeight="Bold" Foreground="{StaticResource Accent2}" Margin="0,8,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
 
-                <TextBlock Grid.Row="0" Text="SCAN" FontSize="20" FontWeight="Bold"
-                           Foreground="{StaticResource NeonCyan}" FontFamily="Consolas" Margin="0,0,0,20"/>
+                            <Border Grid.Row="3" Style="{StaticResource GlassPanel}" Padding="18">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Top" Text="RECENT ACTIVITY" Style="{StaticResource SectionLabel}" Margin="0,0,0,10"/>
+                                    <ListBox ItemsSource="{Binding ScanResults}" Background="Transparent" BorderThickness="0"
+                                            Foreground="{StaticResource Green}" FontFamily="Consolas" FontSize="11"/>
+                                </DockPanel>
+                            </Border>
+                        </Grid>
 
-                <!-- Progress -->
-                <Border Grid.Row="1" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                        BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                        <!-- Scan -->
+                        <Grid x:Name="ScanView" Visibility="{Binding IsScanVisible, Converter={StaticResource BoolToVisConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Text="{Binding ScanStatusText}" FontSize="13"
-                                   Foreground="{StaticResource NeonGreen}" FontFamily="Consolas"/>
+                            <TextBlock Grid.Row="0" Text="Scan" Style="{StaticResource Heading}" Margin="4,2,0,18"/>
 
-                        <ProgressBar Grid.Row="1" Value="{Binding ScanProgress}" Minimum="0" Maximum="100"
-                                     Height="8" Margin="0,10,0,0"
-                                     Foreground="{StaticResource NeonCyan}" Background="{StaticResource DarkBorder}"/>
+                            <Border Grid.Row="1" Style="{StaticResource GlassPanel}" Padding="22" Margin="0,0,0,16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="2" Text="{Binding CurrentScanFile}" FontSize="10"
-                                   Foreground="{StaticResource NeonMagenta}" FontFamily="Consolas" Margin="0,6,0,0"
-                                   TextTrimming="CharacterEllipsis"/>
+                                    <Grid Width="150" Height="150" VerticalAlignment="Center" Margin="0,0,24,0">
+                                        <Ellipse Width="150" Height="150" Stroke="#2FFFFFFF" StrokeThickness="9" Fill="Transparent"/>
+                                        <Ellipse Width="150" Height="150" Stroke="{StaticResource Accent}" StrokeThickness="9"
+                                                 StrokeDashArray="90 350" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Fill="Transparent">
+                                            <Ellipse.Effect>
+                                                <DropShadowEffect Color="{StaticResource C_Accent}" BlurRadius="12" ShadowDepth="0" Opacity="0.75"/>
+                                            </Ellipse.Effect>
+                                            <Ellipse.RenderTransform>
+                                                <RotateTransform Angle="0"/>
+                                            </Ellipse.RenderTransform>
+                                            <Ellipse.Triggers>
+                                                <EventTrigger RoutedEvent="Loaded">
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(RotateTransform.Angle)"
+                                                                             From="0" To="360" Duration="0:0:3.2" RepeatBehavior="Forever"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </EventTrigger>
+                                            </Ellipse.Triggers>
+                                        </Ellipse>
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding ScanProgress, StringFormat={}{0}%}" FontSize="26" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimary}" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="SCANNING" FontSize="9" Foreground="{StaticResource Accent}" HorizontalAlignment="Center"
+                                                       FontFamily="Consolas" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding ScanStatusText}" FontSize="14" Foreground="{StaticResource TextPrimary}"/>
+                                        <TextBlock Text="{Binding CurrentScanFile}" FontSize="11" Foreground="{StaticResource Accent2}" Margin="0,6,0,0"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                            <Button Style="{StaticResource GlassButton}" Click="ScanFileButton_Click" Margin="0,0,10,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconScan}" Stroke="{StaticResource Accent}" StrokeThickness="1.6" Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Scan File" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Style="{StaticResource GlassButton}" Click="ScanDirectoryButton_Click">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource IconDashboard}" Stroke="{StaticResource Accent}" StrokeThickness="1.6" Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Scan Directory" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <Grid Grid.Row="2" Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Style="{StaticResource GlassPanel}" Padding="14">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="FILES SCANNED" Style="{StaticResource SectionLabel}"/>
+                                        <TextBlock Text="{Binding ScannedFiles}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Style="{StaticResource GlassPanel}" Padding="14">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="THREATS" Style="{StaticResource SectionLabel}"/>
+                                        <TextBlock Text="{Binding ThreatsFound}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource Red}" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="4" Style="{StaticResource GlassPanel}" Padding="14">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="PROGRESS" Style="{StaticResource SectionLabel}"/>
+                                        <TextBlock FontSize="22" FontWeight="Bold" Foreground="{StaticResource Green}" Margin="0,6,0,0">
+                                            <Run Text="{Binding ScanProgress, Mode=OneWay}"/><Run Text="%"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Border Grid.Row="3" Style="{StaticResource GlassPanel}" Padding="14" Margin="0,0,16,0"
+                                    Visibility="{Binding ScanComplete, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="{Binding ScanCompleteSummary}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource Green}" HorizontalAlignment="Center"/>
+                            </Border>
+
+                            <Border Grid.Row="4" Style="{StaticResource GlassPanel}" Padding="16">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Top" Text="RESULTS" Style="{StaticResource SectionLabel}" Margin="0,0,0,10"/>
+                                    <ListBox ItemsSource="{Binding ScanResults}" Background="Transparent" BorderThickness="0"
+                                            Foreground="{StaticResource Green}" FontFamily="Consolas" FontSize="11"/>
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- Quarantine -->
+                        <Grid x:Name="QuarantineView" Visibility="{Binding IsQuarantineVisible, Converter={StaticResource BoolToVisConverter}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="Quarantine" Style="{StaticResource Heading}" Margin="4,2,0,18"/>
+
+                            <StackPanel Grid.Row="1" Margin="0,0,0,14" Orientation="Horizontal">
+                                <Button Style="{StaticResource GlassButton}" Click="RefreshQuarantine_Click" Margin="0,0,10,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{StaticResource IconRefresh}" Stroke="{StaticResource Accent}" StrokeThickness="1.6" Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Refresh" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="{Binding QuarantineStatusText}" FontSize="11" Foreground="{StaticResource Accent2}" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Background="Transparent" BorderThickness="0">
+                                <ItemsControl ItemsSource="{Binding QuarantineItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource GlassPanel}" Margin="0,0,0,12" Padding="16">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding FileName}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+                                                        <TextBlock Text="{Binding ThreatName}" FontSize="12" Foreground="{StaticResource Red}" Margin="0,4,0,0"/>
+                                                        <TextBlock Text="{Binding QuarantinedAt}" FontSize="10" Foreground="{StaticResource TextMuted}" Margin="0,6,0,0"/>
+                                                        <TextBlock Text="{Binding OriginalPath}" FontSize="10" Foreground="{StaticResource TextMuted}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Button Style="{StaticResource GlassButton}" Tag="{Binding Id}" Click="RestoreCard_Click" Margin="0,0,8,0" Padding="12,8">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Path Data="{StaticResource IconRestore}" Stroke="{StaticResource Green}" StrokeThickness="1.6" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="Restore" Margin="7,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource Green}"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <Button Style="{StaticResource GlassButton}" Tag="{Binding Id}" Click="DeleteCard_Click" Padding="12,8">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Path Data="{StaticResource IconDelete}" Stroke="{StaticResource Red}" StrokeThickness="1.6" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="Delete" Margin="7,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource Red}"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+
                     </Grid>
-                </Border>
-
-                <!-- Stats -->
-                <Grid Grid.Row="2" Margin="0,0,0,16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Border Grid.Column="0" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                            BorderThickness="1" CornerRadius="8" Padding="12">
-                        <StackPanel HorizontalAlignment="Center">
-                            <TextBlock Text="FILES SCANNED" FontSize="9" Foreground="{StaticResource NeonMagenta}"
-                                       FontWeight="Bold" FontFamily="Consolas"/>
-                            <TextBlock Text="{Binding ScannedFiles}" FontSize="22" FontFamily="Consolas"
-                                       Foreground="{StaticResource NeonCyan}" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Column="2" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                            BorderThickness="1" CornerRadius="8" Padding="12">
-                        <StackPanel HorizontalAlignment="Center">
-                            <TextBlock Text="THREATS" FontSize="9" Foreground="{StaticResource NeonMagenta}"
-                                       FontWeight="Bold" FontFamily="Consolas"/>
-                            <TextBlock Text="{Binding ThreatsFound}" FontSize="22" FontFamily="Consolas"
-                                       Foreground="#FF4444" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Column="4" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                            BorderThickness="1" CornerRadius="8" Padding="12">
-                        <StackPanel HorizontalAlignment="Center">
-                            <TextBlock Text="PROGRESS" FontSize="9" Foreground="{StaticResource NeonMagenta}"
-                                       FontWeight="Bold" FontFamily="Consolas"/>
-                            <TextBlock FontSize="22" FontFamily="Consolas"
-                                       Foreground="{StaticResource NeonGreen}" Margin="0,4,0,0">
-                                <Run Text="{Binding ScanProgress, Mode=OneWay}"/>%
-                            </TextBlock>
-                        </StackPanel>
-                    </Border>
                 </Grid>
-
-                <!-- Complete Summary -->
-                <Border Grid.Row="3" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource NeonGreen}"
-                        BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,16"
-                        Visibility="{Binding ScanComplete, Converter={StaticResource BoolToVisConverter}}">
-                    <TextBlock Text="{Binding ScanCompleteSummary}" FontSize="12" FontWeight="Bold"
-                               Foreground="{StaticResource NeonGreen}" FontFamily="Consolas" HorizontalAlignment="Center"/>
-                </Border>
-
-                <!-- Results -->
-                <Border Grid.Row="4" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                        BorderThickness="1" CornerRadius="8" Padding="12">
-                    <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="RESULTS" FontSize="9"
-                                   Foreground="{StaticResource NeonMagenta}" FontWeight="Bold"
-                                   FontFamily="Consolas" Margin="0,0,0,8"/>
-                        <ListBox ItemsSource="{Binding ScanResults}" Background="Transparent" BorderThickness="0"
-                                 Foreground="{StaticResource NeonGreen}" FontFamily="Consolas" FontSize="11"/>
-                    </DockPanel>
-                </Border>
-            </Grid>
-
-            <!-- Quarantine View -->
-            <Grid Visibility="{Binding isQuarantineVisible, Converter={StaticResource BoolToVisConverter}}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <TextBlock Grid.Row="0" Text="QUARANTINE" FontSize="20" FontWeight="Bold"
-                           Foreground="{StaticResource NeonCyan}" FontFamily="Consolas" Margin="0,0,0,20"/>
-
-                <!-- Actions -->
-                <StackPanel Grid.Row="1" Margin="0,0,0,16">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Content="Refresh" Click="RefreshQuarantine_Click" Margin="0,0,8,0"
-                                FontFamily="Consolas" Padding="16,8"/>
-                        <Button Content="Restore" Click="RestoreQuarantine_Click" Margin="0,0,8,0"
-                                FontFamily="Consolas" Padding="16,8"/>
-                        <Button Content="Delete" Click="DeleteQuarantine_Click"
-                                FontFamily="Consolas" Padding="16,8"/>
-                    </StackPanel>
-                    <TextBlock Text="{Binding QuarantineStatusText}" FontSize="11"
-                               FontFamily="Consolas" Foreground="{StaticResource NeonMagenta}"/>
-                </StackPanel>
-
-                <!-- List -->
-                <Border Grid.Row="2" Background="{StaticResource DarkPanel}" BorderBrush="{StaticResource DarkBorder}"
-                        BorderThickness="1" CornerRadius="8" Padding="12">
-                    <DataGrid ItemsSource="{Binding QuarantineItems}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              Background="Transparent" BorderThickness="0"
-                              Foreground="{StaticResource NeonGreen}" FontFamily="Consolas" FontSize="11"
-                              GridLinesVisibility="None" HeadersVisibility="Column"
-                              SelectionMode="Single" SelectionChanged="QuarantineGrid_SelectionChanged"
-                              CanUserAddRows="False">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="FILE" Binding="{Binding FileName}" Width="*"/>
-                            <DataGridTextColumn Header="THREAT" Binding="{Binding ThreatName}" Width="180"/>
-                            <DataGridTextColumn Header="DATE" Binding="{Binding QuarantinedAt}" Width="160"/>
-                            <DataGridTextColumn Header="PATH" Binding="{Binding OriginalPath}" Width="250"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Border>
             </Grid>
         </Grid>
-    </Grid>
+    </Border>
 </Window>

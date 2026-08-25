@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
-  "downloadUrl": "https://github.com/Panda-Development1/Xentra/releases/download/v1.0.1/AV.Installer.exe",
-  "notes": "Quarantine protocol fix, service loads malware signatures at startup, IPC errors no longer drop the connection, restore/delete now report status."
+  "version": "1.0.2",
+  "downloadUrl": "https://github.com/Panda-Development1/Xentra/releases/download/v1.0.2/AV.Installer.exe",
+  "notes": "Frosted-glass UI redesign with custom window chrome, redesigned Dashboard/Scan/Quarantine views and animations. Fixes: IPC handshake deadlock (app can now connect to the service), signatures load at startup, real-time shield watches real user profiles, restore no longer re-quarantines."
 }

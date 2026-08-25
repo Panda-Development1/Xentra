@@ -39,6 +39,10 @@ public class Program
             })
             .Build();
 
+        var shield = host.Services.GetRequiredService<RealTimeShield>();
+        var ipc = host.Services.GetRequiredService<IpcServer>();
+        ipc.OnFileRestored = shield.AllowRestoredFile;
+
         await host.RunAsync();
     }
 }

@@ -32,8 +32,8 @@ public class IpcClient : IDisposable
             _client = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
             await _client.ConnectAsync(3000, ct);
 
-            _reader = new StreamReader(_client, Encoding.UTF8, leaveOpen: true);
-            _writer = new StreamWriter(_client, Encoding.UTF8, leaveOpen: true) { AutoFlush = true };
+            _reader = new StreamReader(_client, new UTF8Encoding(false));
+            _writer = new StreamWriter(_client, new UTF8Encoding(false)) { AutoFlush = true };
 
             var authLine = await _reader.ReadLineAsync(ct);
             if (authLine != null && authLine.StartsWith("AUTH:"))
